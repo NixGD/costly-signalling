@@ -45,26 +45,35 @@ class Receivers(Population):
         strategy[1] = np.clip(sigma * np.random.randn() + strategy[1], 0, 1)
         return strategy
 
-    def avg_acceptance_level(self, gen_tuple, signal):
-        gen_list = range(int(gen_tuple[0]), int(gen_tuple[1]))
-        acceptances_list = [sum([self.get_acceptance_individual(signal, r_strategy) for r_strategy in self.strategies[generation]])
-            for generation in gen_list]
-        avg_acceptances = sum(acceptances_list)/len(acceptances_list)
-        return avg_acceptances/self.population_size
-
     def get_acceptance_profile(self, gen_edges, signal_edges):
         """
         :param gen_edges:
         :param signal_edges:
         :return:   A numpy array of generation profiles.
         """
-
         return np.array([[self.avg_acceptance_level(generation_tuple, signal)
                             for signal in pair_avg(signal_edges) ]
                             for generation_tuple in pair_list(gen_edges)])
 
-    def get_acceptance_population(self, sender_strategy):
-        return sum([self.get_acceptance_individual(sender_strategy, strategy) for strategy in self.strategies])
+    def avg_acceptance_level(self, gen_tuple, sender_strategy):
+        """
+        Helper for acceptance profile.
+        :param gen_tuple: The range of generations that this pixel covers.
+        :param sender_strategy: The strategy being tested
+        :return: The acceptance of this strategy of an average receiver over this time period
+        """
+        gen_list = range(int(gen_tuple[0]), int(gen_tuple[1]))
+        return np.mean([self.get_acceptance_population(sender_strategy, self.strategies[gen]) for gen in gen_list])
+
+    def get_acceptance_population(self, sender_strategy, gen):
+        """
+        Helper for acceptance profiling
+        :param sender_strategy: The strategy being tested
+        :param gen: in specified generation
+        :return: The average acceptance of receivers in that generation of said strategy.
+        """
+        receiver_strategies = self.strategy_history[gen]
+        return np.mean([self.get_acceptance_individual(sender_strategy, strategy) for strategy in receiver_strategies])
 
     @staticmethod
     def get_acceptance_individual(sender_strategy, receiver_strategy):
