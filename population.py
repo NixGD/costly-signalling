@@ -4,21 +4,20 @@ import random
 class Population:
     def __init__(self, simulation, population_size):
         self.simulation = simulation
-        self.strategies = [None]*simulation.num_generations
+        self.strategy_history = [None]*simulation.num_generations
         self.population_size = population_size
-        self.strategies[0] = [self.get_random_strategy() for _ in range(self.population_size)]
+        self.strategies = [self.get_random_strategy() for _ in range(self.population_size)]
+        self.strategy_history[0] = self.strategies
 
     def update(self):
-        old_strategies = self.strategies[self.simulation.i - 1]
-        fitness_list = [self.calculate_fitness(strategy) for strategy in old_strategies]
-        n = len(old_strategies)
-        self.strategies[self.simulation.i] = [self.get_new_strategy(old_strategies, fitness_list) for _ in range(n)]
+        fitness_list = [self.calculate_fitness(individual) for individual in range(self.population_size)]
+        self.strategies = [self.get_new_strategy(self.strategies, fitness_list) for _ in range(self.population_size)]
+        self.strategy_history[self.simulation.i] = self.strategies
 
     def calculate_fitness(self, strategy):
         """
         Takes in a single strategy, returns the fitness.
         """
-
         payoff = self.calculate_payoff(strategy)
         return math.exp(self.simulation.selection_strength * payoff)
 

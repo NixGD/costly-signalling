@@ -32,10 +32,37 @@ class Simulation:
         self.senders = {q: Senders(q, self, population_size = n) for q, n in senders}
         self.receivers = Receivers(self, population_size = receiver_number)
 
+        self.total_senders = sum([pop.population_size for pop in self.senders.values()])
+
         for self.i in range(1, self.num_generations):  # Initialize a generation with random values.
             self.update_pop()
 
+    def acceptance_table(self, sender_pop):
+        """
+        :param Senders sender_pop:
+        :return: a 2d array of acceptance values.  d0 = sender #, d1 = receiver #
+        """
+        gen = self.i - 1
+        return np.array([[self.receivers.get_acceptance_individual(sender, receiver)
+                        for receiver in self.receivers.strategies]
+                        for sender in sender_pop.strategies])
+
+    def get_avg_acceptance(self, q, sender_number):
+        return np.mean(self.acceptance_table_dic[q][sender_number])
+
+    def get_aceptees(self, receiver_num):
+        """
+        :param int receiver_num: The numerical identifier of the receiver
+        :return: A dictionary of quality: proportion accepted.
+        Note that proportion accepted is out of the total number of senders, not the number of that quality.
+        This allows us to weight the sender-population to be unfriendly to the receivers easily.
+        Eventually, this should probalby be uncoupled from population size, but it does seem that the population sizes
+        are big enough to work.
+        """
+        return {q: (sum(table[:, receiver_num])/self.total_senders) for q, table in self.acceptance_table_dic.items()}
+
     def update_pop(self):
+        self.acceptance_table_dic = {q: self.acceptance_table(population) for q, population in self.senders.items()}
         for sender in self.senders.values():
             sender.update()
         self.receivers.update()
@@ -147,4 +174,7 @@ def vary_attribute_graph(param, graph_type = "s.uni_graph"):
 #     s = pickle.load(f)
 # s.dist_graph(100)
 
-Simulation(num_generations=1000)
+s = Simulation(num_generations=10000)
+fig, ax = plt.subplots(1, 1, sharex=True)
+s.dist_graph(ax)
+plt.show()
