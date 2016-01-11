@@ -46,7 +46,8 @@ class Simulation:
         :return: a 2d array of acceptance values.  d0 = sender #, d1 = receiver #
         """
         gen = self.i - 1
-        return np.array([[self.receivers.get_acceptance_individual(sender, receiver)
+        acceptance_fn = self.receivers.get_acceptance_individual
+        return np.array([[acceptance_fn(sender, receiver)
                         for receiver in self.receivers.strategies]
                         for sender in sender_pop.strategies])
 
@@ -62,7 +63,7 @@ class Simulation:
         Eventually, this should probalby be uncoupled from population size, but it does seem that the population sizes
         are big enough to work.
         """
-        return {q: (sum(table[:, receiver_num])/self.total_senders) for q, table in self.acceptance_table_dic.items()}
+        return {q: (np.sum(table[:, receiver_num])/self.total_senders) for q, table in self.acceptance_table_dic.items()}
 
     def update_pop(self):
         self.acceptance_table_dic = {q: self.acceptance_table(population) for q, population in self.senders.items()}
@@ -179,7 +180,7 @@ def vary_attribute_graph(param, graph_type = "uni_graph"):
 #     s = pickle.load(f)
 # s.dist_graph(100)
 
-s = Simulation(num_generations=10000)
+s = Simulation(num_generations=1000)
 # fig, ax = plt.subplots(1, 1, sharex=True)
 # s.dist_graph(ax)
 # plt.show()

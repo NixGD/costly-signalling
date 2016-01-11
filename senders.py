@@ -28,6 +28,8 @@ class Senders(Population):
 
     def vary_strategy(self, strategy):
         sigma = self.simulation.sender_sigma
+        if sigma == 0:
+            return strategy
         return np.clip(sigma * np.random.randn() + strategy, 0, 1)
 
     def strategy_points(self):

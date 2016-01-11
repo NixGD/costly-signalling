@@ -76,6 +76,8 @@ class HighLow(Receivers):
 
     def vary_strategy(self, strat):
         sigma = self.simulation.receiver_sigma
+        if sigma == 0:
+            return strat
         low  = np.clip(sigma * np.random.randn() + strat[0], 0, 1)
         high = np.clip(sigma * np.random.randn() + strat[1], 0, 1)
         return low, high
