@@ -22,28 +22,10 @@ class Receivers(Population):
     def __init__(self, simulation, population_size = None):
         Population.__init__(self, simulation, population_size)
 
-    @staticmethod
-    def get_random_strategy():
-        """
-        Returns a list of two numbers representing the range that the receiver will accept.
-            Every value in [0, 1) has equal chance of being included in range.
-        """
-        width = random.random()*0.5
-        center = random.uniform(-width, 1+width)
-        low = max(0, center-width)
-        high = min(1, center+width)
-        return [low, high]
-
     def calculate_payoff(self, receiver_num):
         accepted = self.simulation.get_aceptees(receiver_num)
         payoff = sum([math.log(q, 2)*num_accepted for q, num_accepted in accepted.items()])
         return payoff
-
-    def vary_strategy(self, strategy):
-        sigma = self.simulation.receiver_sigma
-        strategy[0] = np.clip(sigma * np.random.randn() + strategy[0], 0, 1)
-        strategy[1] = np.clip(sigma * np.random.randn() + strategy[1], 0, 1)
-        return strategy
 
     def get_acceptance_profile(self, gen_edges, signal_edges):
         """
@@ -75,8 +57,29 @@ class Receivers(Population):
         receiver_strategies = self.strategy_history[gen]
         return np.mean([self.get_acceptance_individual(sender_strategy, strategy) for strategy in receiver_strategies])
 
+
+class HighLow(Receivers):
+    def __init__(self, simulation, population_size = None):
+        Population.__init__(self, simulation, population_size)
+
+    @staticmethod
+    def get_random_strategy():
+        """
+        Returns a list of two numbers representing the range that the receiver will accept.
+            Every value in [0, 1) has equal chance of being included in range.
+        """
+        width = random.random()*0.5
+        center = random.uniform(-width, 1+width)
+        low = max(0, center-width)
+        high = min(1, center+width)
+        return low, high
+
+    def vary_strategy(self, strat):
+        sigma = self.simulation.receiver_sigma
+        low  = np.clip(sigma * np.random.randn() + strat[0], 0, 1)
+        high = np.clip(sigma * np.random.randn() + strat[1], 0, 1)
+        return low, high
+
     @staticmethod
     def get_acceptance_individual(sender_strategy, receiver_strategy):
-        if receiver_strategy[0] < sender_strategy < receiver_strategy[1]:
-            return 1
-        return 0
+        return receiver_strategy[0] < sender_strategy < receiver_strategy[1]

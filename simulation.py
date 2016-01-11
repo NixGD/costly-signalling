@@ -1,6 +1,6 @@
 import numpy as np
 from senders import Senders
-from receivers import Receivers
+from receivers import Receivers, HighLow
 import pickle
 import matplotlib.pyplot as plt
 
@@ -19,9 +19,12 @@ def overlay_grey(fg, fg_alpha, bg):
     # All inputs scaled 0-1. Fg (foreground) with alpha + greyscale background.
     return ((1 - fg_alpha) * bg) + (fg_alpha * fg)
 
+
 class Simulation:
-    def __init__(self, num_generations = 50000, senders = [(.5, 50), (2, 25)], receiver_number = 50,\
-                 sender_sigma = 0.006, receiver_sigma = 0, selection_strength = 1, mutation_rate = 0.005):
+    def __init__(self, num_generations = 50000, receiver_type = HighLow,
+                 senders = ((.5, 50), (2, 25)), receiver_number = 50,
+                 sender_sigma = 0.006, receiver_sigma = 0,
+                 selection_strength = 1, mutation_rate = 0.005):
         self.num_generations = num_generations
         self.sender_sigma    = sender_sigma
         self.receiver_sigma  = receiver_sigma
@@ -30,7 +33,7 @@ class Simulation:
 
         self.pb = ProgressBar(self.num_generations-1)
         self.senders = {q: Senders(q, self, population_size = n) for q, n in senders}
-        self.receivers = Receivers(self, population_size = receiver_number)
+        self.receivers = receiver_type(self, population_size = receiver_number)
 
         self.total_senders = sum([pop.population_size for pop in self.senders.values()])
 
@@ -73,6 +76,7 @@ class Simulation:
         """
         Makes one graph charting two sender types and one receiver type.
         """
+        assert len(self.senders) == 2
 
         high_heatmap, x_edges, y_edges = self.senders[max(self.senders)].sender_heatmap(gBins, iBins)
         high_heatmap = high_heatmap.T
@@ -93,8 +97,8 @@ class Simulation:
 
     def mean_dist_graph(self, ax, sBins = 100, ycropped = True):
         #Graphs a histogram of the mean strategy played in diff. generations by two sender populations.
-        high_points = [np.mean(s_list) for s_list in self.senders[max(self.senders)].strategies]
-        low_points  = [np.mean(s_list) for s_list in self.senders[min(self.senders)].strategies]
+        high_points = [np.mean(s_list) for s_list in self.senders[max(self.senders)].strategy_history]
+        low_points  = [np.mean(s_list) for s_list in self.senders[min(self.senders)].strategy_history]
         buckets, _, _ = ax.hist([high_points,low_points], bins=sBins, histtype="step", color=["red","blue"])
         ax.axvline(x = .5, c="black")
         if ycropped:
@@ -110,6 +114,7 @@ class Simulation:
         if ycropped:
             maximum_high = max(buckets[0])
             ax.set_ylim(0,maximum_high)
+
 
 class ProgressBar():
     def __init__(self, goal, width=50):
@@ -147,7 +152,7 @@ def vary_attribute_uni_graph(param):
     plt.show()
 
 
-def vary_attribute_graph(param, graph_type = "s.uni_graph"):
+def vary_attribute_graph(param, graph_type = "uni_graph"):
     fname = "{0}-varied.pik".format(param)
     with open(fname, 'rb') as f:
         s_list = pickle.load(f)
@@ -156,7 +161,7 @@ def vary_attribute_graph(param, graph_type = "s.uni_graph"):
     fig, axlist = plt.subplots(len(s_list), 1, sharex=True)
     for index, (s, title) in enumerate(s_list):
         graphing_method = getattr(s, graph_type)
-        graphing_method(axlist[index], ycropped=True)
+        graphing_method(axlist[index])
         axlist[index].set_title(title)
     plt.show()
 
@@ -175,6 +180,7 @@ def vary_attribute_graph(param, graph_type = "s.uni_graph"):
 # s.dist_graph(100)
 
 s = Simulation(num_generations=10000)
-fig, ax = plt.subplots(1, 1, sharex=True)
-s.dist_graph(ax)
-plt.show()
+# fig, ax = plt.subplots(1, 1, sharex=True)
+# s.dist_graph(ax)
+# plt.show()
+
