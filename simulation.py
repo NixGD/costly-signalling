@@ -21,7 +21,7 @@ def overlay_grey(fg, fg_alpha, bg):
 
 
 class Simulation:
-    def __init__(self, num_generations = 50000, receiver_type = HighLow,
+    def __init__(self, num_generations = 10000, receiver_type = HighLow,
                  senders = ((.5, 50), (2, 25)), receiver_number = 50,
                  sender_sigma = 0.006, receiver_sigma = 0,
                  selection_strength = 1, mutation_rate = 0.005):
@@ -73,7 +73,7 @@ class Simulation:
         if self.i % 100 == 0:
             self.pb.display(self.i)
 
-    def uni_graph(self, ax, gBins, iBins):
+    def uni_graph(self, ax, gBins = 500, iBins = 100):
         """
         Makes one graph charting two sender types and one receiver type.
         """
@@ -93,24 +93,25 @@ class Simulation:
 
         extent = [0, self.num_generations, 0, 1]
         ax.imshow(rgb_values, extent=extent, interpolation='nearest', aspect = 'auto', origin = 'lower')
-        ax.ylim(0,1)
-        ax.xlim(0, self.num_generations)
+        ax.set_ylim(0,1)
+        ax.set_xlim(0, self.num_generations)
 
     def mean_dist_graph(self, ax, sBins = 100, ycropped = True):
         #Graphs a histogram of the mean strategy played in diff. generations by two sender populations.
         high_points = [np.mean(s_list) for s_list in self.senders[max(self.senders)].strategy_history]
         low_points  = [np.mean(s_list) for s_list in self.senders[min(self.senders)].strategy_history]
-        buckets, _, _ = ax.hist([high_points,low_points], bins=sBins, histtype="step", color=["red","blue"])
+        buckets, _, _ = ax.hist([high_points,low_points], bins=sBins,  color=["red","blue"]) #histtype = "step"
         ax.axvline(x = .5, c="black")
         if ycropped:
             maximum_high = max(buckets[0])
             ax.set_ylim(0,maximum_high)
 
+
     def dist_graph(self, ax, sBins = 100, ycropped = True):
         #Graphs a histogram of the total strategies played over time by two sender populations.
         high_points = self.senders[max(self.senders)].strategy_points()
         low_points  = self.senders[min(self.senders)].strategy_points()
-        buckets, _, _ = ax.hist([high_points,low_points], bins=sBins, histtype="step", color=["red","blue"])
+        buckets, _, _ = ax.hist([high_points,low_points], bins=sBins, color=["red","blue"])
         ax.axvline(x = .5, c="black")
         if ycropped:
             maximum_high = max(buckets[0])
@@ -142,19 +143,9 @@ def varied_simulations(param, value_list):
         pickle.dump(s_list, f, -1)
 
 
-def vary_attribute_uni_graph(param):
-    fname = "{0}-varied.pik".format(param)
-    with open(fname, 'rb') as f:
-        s_list = pickle.load(f)
-
-    fig, axlist = plt.subplots(len(s_list), 1, sharex=True)
-    for index, (s, title) in enumerate(s_list):
-        axlist[index].set_title(title)
-    plt.show()
-
-
 def vary_attribute_graph(param, graph_type = "uni_graph"):
     fname = "{0}-varied.pik".format(param)
+    print(fname)
     with open(fname, 'rb') as f:
         s_list = pickle.load(f)
 
@@ -170,7 +161,7 @@ def vary_attribute_graph(param, graph_type = "uni_graph"):
 #sender_settings = [((low_qual, 50), (2, 25)) for low_qual in np.arange(.20, 1, .20)]
 #varied_simulations("senders", sender_settings)
 #varied_simulations("sender_sigma", np.arange(0, .013, .003))
-#varied_simulations("receiver_sigma", np.arange(0, .006, .001))
+#varied_simulations("receiver_sigma", np.arange(0, .006, .001)) # 10,000 generations
 
 #s = Simulation(num_generations=50000)
 # with open("basic.pik", 'wb') as f:
@@ -179,8 +170,9 @@ def vary_attribute_graph(param, graph_type = "uni_graph"):
 #with open("basic.pik", 'rb') as f:
 #     s = pickle.load(f)
 # s.dist_graph(100)
+s
+vary_attribute_graph("receiver_sigma", graph_type="dist_graph")
 
-s = Simulation(num_generations=1000)
 # fig, ax = plt.subplots(1, 1, sharex=True)
 # s.dist_graph(ax)
 # plt.show()

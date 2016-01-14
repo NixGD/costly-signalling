@@ -45,7 +45,7 @@ class Receivers(Population):
         :return: The acceptance of this strategy of an average receiver over this time period
         """
         gen_list = range(int(gen_tuple[0]), int(gen_tuple[1]))
-        return np.mean([self.get_acceptance_population(sender_strategy, self.strategies[gen]) for gen in gen_list])
+        return np.mean([self.get_acceptance_population(sender_strategy, gen) for gen in gen_list])
 
     def get_acceptance_population(self, sender_strategy, gen):
         """
@@ -75,6 +75,12 @@ class HighLow(Receivers):
         return low, high
 
     def vary_strategy(self, strat):
+        """
+        Very important that it returns a pointer to a different copy of strat, as otherwise all receiver
+         strats will modify together
+        :param strat:
+        :return:
+        """
         sigma = self.simulation.receiver_sigma
         if sigma == 0:
             return strat
